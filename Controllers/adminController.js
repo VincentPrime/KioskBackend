@@ -20,6 +20,7 @@ export const removeWindow = asyncHandler(async (req, res) => res.json(await admi
 // Devices
 export const listDevices = asyncHandler(async (req, res) => res.json({ devices: await admin.listDevices(branchOf(req)) }));
 export const createDevice = asyncHandler(async (req, res) => res.status(201).json({ device: await admin.createDevice(branchOf(req), req.body) }));
+export const rotateDevice = asyncHandler(async (req, res) => res.json({ device: await admin.rotateDevice(branchOf(req), req.params.id) }));
 export const revokeDevice = asyncHandler(async (req, res) => { await admin.revokeDevice(branchOf(req), req.params.id); res.json({ ok: true }); });
 
 // Settings

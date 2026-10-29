@@ -1,5 +1,6 @@
 // Thin wrapper around the PayMongo REST API (QR Ph via the Payment Intent workflow).
 // Docs: https://developers.paymongo.com/docs/payment-acceptance-qr-ph-api
+import axios from 'axios';
 import crypto from 'crypto';
 import { env } from '../Config/env.js';
 import { ApiError } from '../Utils/ApiError.js';
@@ -8,18 +9,16 @@ const P = env.paymongo;
 export const gcashAvailable = () => P.mock || !!(P.secretKey && P.publicKey);
 const basic = (key) => `Basic ${Buffer.from(`${key}:`).toString('base64')}`;
 
+// axios: hard timeout, no redirects, never throws on HTTP errors (we map them ourselves)
+const http = axios.create({ timeout: 15_000, maxRedirects: 0, validateStatus: () => true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
+
 async function call(method, path, key, attributes) {
   let res;
   try {
-    res = await fetch(`${P.apiUrl}${path}`, {
-      method,
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: basic(key) },
-      body: attributes ? JSON.stringify({ data: { attributes } }) : undefined,
-    });
+    res = await http.request({ method, url: `${P.apiUrl}${path}`, headers: { Authorization: basic(key) }, data: attributes ? { data: { attributes } } : undefined });
   } catch { throw new ApiError(502, 'Cannot reach PayMongo', 'PROVIDER_UNREACHABLE'); }
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(502, json.errors?.[0]?.detail || `PayMongo error (${res.status})`, 'PROVIDER_ERROR');
-  return json.data;
+  if (res.status < 200 || res.status >= 300) throw new ApiError(502, res.data?.errors?.[0]?.detail || `PayMongo error (${res.status})`, 'PROVIDER_ERROR');
+  return res.data.data;
 }
 
 const mockQr = (amount) => `data:image/svg+xml;base64,${Buffer.from(

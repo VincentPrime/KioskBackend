@@ -93,6 +93,15 @@ export async function createDevice(branchId, { kind, name }) {
   return { id: device.id, kind, name, token };
 }
 
+/** New token for an existing device. The old token stops working immediately. Shown ONCE. */
+export async function rotateDevice(branchId, id) {
+  const device = await Device.findOne({ where: { id, branchId, isActive: true } });
+  if (!device) throw ApiError.notFound('Device not found');
+  const token = generateDeviceToken();
+  await device.update({ tokenHash: hashToken(token) });
+  return { id: device.id, kind: device.kind, name: device.name, token };
+}
+
 export async function revokeDevice(branchId, id) {
   const device = await Device.findOne({ where: { id, branchId } });
   if (!device) throw ApiError.notFound('Device not found');

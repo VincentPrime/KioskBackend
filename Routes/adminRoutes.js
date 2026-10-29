@@ -28,6 +28,7 @@ r.delete('/deposit-accounts/:id', c.removeAccount);
 
 r.get('/devices', c.listDevices);
 r.post('/devices', validate(s.createDeviceSchema), c.createDevice);
+r.post('/devices/:id/rotate', c.rotateDevice);
 r.delete('/devices/:id', c.revokeDevice);
 
 r.get('/tickets', c.todayTickets);

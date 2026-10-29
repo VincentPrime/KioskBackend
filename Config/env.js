@@ -15,7 +15,8 @@ export const env = {
   dbSsl: process.env.DB_SSL !== 'false',
   jwtSecret: required('JWT_SECRET'),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '12h',
-  clientOrigins: (process.env.CLIENT_ORIGINS || 'http://localhost:5173').split(',').map((s) => s.trim()),
+  // Comma-separated. Trailing slashes and spaces are ignored, so "https://x.vercel.app/" still works.
+  clientOrigins: (process.env.CLIENT_ORIGINS || 'http://localhost:5173').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean),
   sessionStaleSeconds: Number(process.env.SESSION_STALE_SECONDS) || 60,
   sweepIntervalSeconds: Number(process.env.SWEEP_INTERVAL_SECONDS) || 15,
   paymongo: {

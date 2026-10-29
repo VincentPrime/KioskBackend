@@ -1,12 +1,12 @@
 import { User } from '../Models/index.js';
 import { ApiError } from '../Utils/ApiError.js';
 import { asyncHandler } from '../Utils/asyncHandler.js';
-import { COOKIE_NAME, verifyJwt } from '../Utils/token.js';
+import { verifyJwt } from '../Utils/token.js';
 
-/** Employee/admin auth: JWT from the httpOnly cookie (or an Authorization: Bearer header). */
+/** Employee/admin/supervisor auth: JWT from the "Authorization: Bearer <token>" header. */
 export const requireAuth = asyncHandler(async (req, _res, next) => {
   const header = req.headers.authorization;
-  const token = req.cookies?.[COOKIE_NAME] || (header?.startsWith('Bearer ') ? header.slice(7) : null);
+  const token = header?.startsWith('Bearer ') ? header.slice(7).trim() : null;
   if (!token) throw ApiError.unauthorized();
 
   let payload;

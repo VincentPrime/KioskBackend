@@ -1,8 +1,7 @@
 import { Server } from 'socket.io';
-import { parse as parseCookie } from 'cookie';
 import { env } from '../Config/env.js';
 import { Device, User } from '../Models/index.js';
-import { COOKIE_NAME, hashToken, verifyJwt } from './token.js';
+import { hashToken, verifyJwt } from './token.js';
 
 let io = null;
 
@@ -11,7 +10,7 @@ let io = null;
  * or the employee's JWT, then join the room for their branch.
  */
 export function initSocket(httpServer) {
-  io = new Server(httpServer, { cors: { origin: env.clientOrigins, credentials: true } });
+  io = new Server(httpServer, { cors: { origin: env.clientOrigins }, transports: ['websocket', 'polling'] });
 
   io.use(async (socket, next) => {
     try {
@@ -22,8 +21,7 @@ export function initSocket(httpServer) {
         socket.data.branchId = device.branchId;
         socket.data.deviceId = device.id;
       } else {
-        const jwtToken = token || parseCookie(socket.handshake.headers.cookie || '')[COOKIE_NAME];
-        const payload = verifyJwt(jwtToken);
+        const payload = verifyJwt(token);
         const user = await User.findByPk(payload.sub);
         if (!user || !user.isActive) throw new Error('bad user');
         socket.data.branchId = user.branchId;
